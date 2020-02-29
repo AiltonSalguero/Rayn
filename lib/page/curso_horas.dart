@@ -3,16 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rayn/dao/curso_dao.dart';
 import 'package:rayn/model/curso.dart';
+import 'package:rayn/util/curso_seleccionado.dart';
+import 'package:rayn/util/util.dart';
 
 class CursoHoras extends StatefulWidget {
-  CursoHoras({Key key, this.codCurso}) : super(key: key);
-  int codCurso;
-  Curso curso;
   @override
   _CursoHorasState createState() => _CursoHorasState();
 }
 
 class _CursoHorasState extends State<CursoHoras> {
+  Curso curso;
+  Timer temporizador;
+  int tiempo;
   bool contarTiempoEstudiando = false;
   bool contarTiempoEnseniando = false;
   bool contarTiempoViendoVideos = false;
@@ -20,52 +22,153 @@ class _CursoHorasState extends State<CursoHoras> {
 
   @override
   void initState() {
-    CursoDao.getCursoByCodigo(widget.codCurso).then((cur) {
-      widget.curso = cur;
+    CursoDao.getCursoByCodigo(CursoSeleccionado.codCurso).then((cur) {
+      curso = cur;
+      setState(() {});
+      print("Curso seleccionado es :" + cur.nombre);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        children: <Widget>[
-          _buildEncabezado(),
-          _buildTiempoEstudiando(),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.red[200],
+        elevation: 0.0,
+        title: Text(
+          curso.nombre,
+          style: TextStyle(
+            fontSize: 24.0,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      body: Container(
+        child: Column(
+          children: <Widget>[
+            curso == null
+                ? Text("wait")
+                : Center(
+                    child: Container(
+                    width: MediaQuery.of(context).size.width * 0.95,
+                    height: MediaQuery.of(context).size.height * 0.85,
+                    child: Card(
+                      elevation: 10.0,
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: _buildTiempo(),
+                      ),
+                    ),
+                  )),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildEncabezado() {
-    return Container();
+  Widget _buildTiempo() {
+    // TODO Muestra tiempo en horas, boton para parar, renaurar,mostrar puntaje
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            _buildTime("Tiempo estudiando", curso.tiempoEstudiando),
+            Switch(
+              value: contarTiempoEstudiando,
+              onChanged: (value) {
+                setState(() {
+                  pausarTodosLosContadores();
+                  contarTiempoEstudiando = value;
+                  onTiempoSwitchButton(
+                      "tiempoEstudiando", contarTiempoEstudiando);
+                });
+              },
+            ),
+          ],
+        ),
+        Row(
+          children: <Widget>[
+            _buildTime("Tiempo enseñando", curso.tiempoEnseniando),
+            Switch(
+              value: contarTiempoEnseniando,
+              onChanged: (value) {
+                setState(() {
+                  pausarTodosLosContadores();
+                  contarTiempoEnseniando = value;
+
+                  onTiempoSwitchButton(
+                      "tiempoEnseniando", contarTiempoEnseniando);
+                });
+              },
+            ),
+          ],
+        ),
+        Row(
+          children: <Widget>[
+            _buildTime("Tiempo viendo videos", curso.tiempoViendoVideos),
+            Switch(
+              value: contarTiempoViendoVideos,
+              onChanged: (value) {
+                setState(() {
+                  pausarTodosLosContadores();
+                  contarTiempoViendoVideos = value;
+                  onTiempoSwitchButton(
+                      "tiempoViendoVideos", contarTiempoViendoVideos);
+                });
+              },
+            ),
+          ],
+        ),
+        Row(
+          children: <Widget>[
+            _buildTime("Tiempo en clase", curso.tiempoEnClase),
+            Switch(
+              value: contarTiempoEnClase,
+              onChanged: (value) {
+                pausarTodosLosContadores();
+                setState(() {
+                  contarTiempoEnClase = value;
+                  onTiempoSwitchButton("tiempoEnClase", contarTiempoEnClase);
+                });
+              },
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
-  Widget _buildTiempoEstudiando() {
-    return Center(
+  //Widget _buildTiempoRow(String titulo, int tiempo, bool contarTiempo) {
+  // Hacer una sola fucion para todos
+  Widget _buildTime(String tipoTiempo, int tiempo) {
+    return Padding(
+      padding: EdgeInsets.all(16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Text(
-            'Tiempo Estudiando',
+            tipoTiempo,
+            style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
           ),
           Text(
-            widget.curso.tiempoEstudiando.toString(),
-            style: Theme.of(context).textTheme.display1,
+            Util.segundosToReloj(tiempo),
+            style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTextRow(Curso curso) {
+  Widget _buildTiempoRow(Curso curso) {
     return Container(
       margin: EdgeInsets.only(
         left: 12,
         right: 16,
       ),
       child: ListTile(
-        subtitle: Text("Regions: ${widget.curso.nombre}"),
+        subtitle: Text("Regions: ${curso.nombre}"),
         title: Container(
           child: Text(
             curso.tiempoEstudiando.toString(),
@@ -80,74 +183,56 @@ class _CursoHorasState extends State<CursoHoras> {
   }
 
   // Activa o desactiva el contador y actualiza el tiempo en la base de datos
-  void onTiempoEstudiandoButton() {
-    Timer timer;
+  void onTiempoSwitchButton(String tipoTiempo, bool contarTiempo) {
+    if (contarTiempo) {
+      temporizador = Timer.periodic(Duration(seconds: 1), (timer) {
+        setState(() {
+          switch (tipoTiempo) {
+            case "tiempoEstudiando":
+              curso.tiempoEstudiando++;
+              tiempo = curso.tiempoEstudiando;
+              break;
+            case "tiempoEnseniando":
+              curso.tiempoEnseniando++;
+              tiempo = curso.tiempoEnseniando;
+              break;
+            case "tiempoViendoVideos":
+              curso.tiempoViendoVideos++;
+              tiempo = curso.tiempoViendoVideos;
+              break;
+            case "tiempoEnClase":
+              curso.tiempoEnClase++;
+              tiempo = curso.tiempoEnClase;
+              break;
+          }
+        });
+      });
+    } else {
+      temporizador.cancel();
+      CursoDao.updateCurso(tipoTiempo, curso.codCurso, tiempo);
+    }
+  }
+
+  void pausarTodosLosContadores() {
+    if (temporizador != null) {
+      temporizador.cancel();
+    }
+
     if (contarTiempoEstudiando) {
-      timer.cancel();
-      CursoDao.updateTiempoEstudiando(
-          widget.curso.codCurso, widget.curso.tiempoEstudiando);
-    } else {
-      timer = Timer.periodic(Duration(seconds: 1), (timer) {
-        setState(() {
-          widget.curso.tiempoEstudiando++;
-        });
-      });
+      contarTiempoEstudiando = false;
+      onTiempoSwitchButton("tiempoEstudiando", contarTiempoEstudiando);
     }
-
-    contarTiempoEstudiando = !contarTiempoEstudiando;
-  }
-
-  // Activa o desactiva el contador y actualiza el tiempo en la base de datos
-  void onTiempoEnseniandoButton() {
-    Timer timer;
     if (contarTiempoEnseniando) {
-      timer.cancel();
-      CursoDao.updateTiempoEnseniando(
-          widget.curso.codCurso, widget.curso.tiempoEnseniando);
-    } else {
-      timer = Timer.periodic(Duration(seconds: 1), (timer) {
-        setState(() {
-          widget.curso.tiempoEnseniando++;
-        });
-      });
+      contarTiempoEnseniando = false;
+      onTiempoSwitchButton("tiempoEnseniando", contarTiempoEnseniando);
     }
-
-    contarTiempoEnseniando = !contarTiempoEnseniando;
-  }
-
-  // Activa o desactiva el contador y actualiza el tiempo en la base de datos
-  void onTiempoViendoVideosButton() {
-    Timer timer;
     if (contarTiempoViendoVideos) {
-      timer.cancel();
-      CursoDao.updateTiempoViendoVideos(
-          widget.curso.codCurso, widget.curso.tiempoViendoVideos);
-    } else {
-      timer = Timer.periodic(Duration(seconds: 1), (timer) {
-        setState(() {
-          widget.curso.tiempoViendoVideos++;
-        });
-      });
+      contarTiempoViendoVideos = false;
+      onTiempoSwitchButton("tiempoViendoVideos", contarTiempoViendoVideos);
     }
-
-    contarTiempoViendoVideos = !contarTiempoViendoVideos;
-  }
-
-  // Activa o desactiva el contador y actualiza el tiempo en la base de datos
-  void onTiempoEnClaseButton() {
-    Timer timer;
     if (contarTiempoEnClase) {
-      timer.cancel();
-      CursoDao.updateTiempoEnClase(
-          widget.curso.codCurso, widget.curso.tiempoEnClase);
-    } else {
-      timer = Timer.periodic(Duration(seconds: 1), (timer) {
-        setState(() {
-          widget.curso.tiempoEnClase++;
-        });
-      });
+      contarTiempoEnClase = false;
+      onTiempoSwitchButton("tiempoEnClase", contarTiempoEnClase);
     }
-
-    contarTiempoEnClase = !contarTiempoEnClase;
   }
 }

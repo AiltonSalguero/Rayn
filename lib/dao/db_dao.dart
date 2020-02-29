@@ -20,9 +20,34 @@ class DataBaseDao {
     return db;
   }
 
+  static void crearTablas(Database db, int version) async {
+    crearTablaCurso(db, version);
+    crearTablaUsuario(db, version);
+  }
+
   static void crearTablaCurso(Database db, int version) async {
-    String query =
-        'CREATE TABLE Curso(codCurso INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, tiempoEstudiando INTEGER, tiempoEnseniando INTEGER, tiempoViendoVideos INTEGER, tiempoEnClase INTEGER)';
+    String query = '''
+        CREATE TABLE Curso(
+          codCurso INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre TEXT NOT NULL,
+          tiempoEstudiando INTEGER NOT NULL,
+          tiempoEnseniando INTEGER NOT NULL,
+          tiempoViendoVideos INTEGER NOT NULL,
+          tiempoEnClase INTEGER NOT NULL
+          )
+        ''';
+    await db.execute(query);
+  }
+
+  static void crearTablaUsuario(Database db, int version) async {
+    String query = '''
+        CREATE TABLE Usuario(
+          codUsuario INTEGER PRIMARY KEY AUTOINCREMENT,
+          apodo TEXT NOT NULL,
+          puntaje INTEGER NOT NULL,
+          nivel INTEGER NOT NULL,
+          )
+        ''';
     await db.execute(query);
   }
 }

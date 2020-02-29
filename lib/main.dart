@@ -10,14 +10,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Rayn',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       routes: {
-        '/mis_cursos': (context) => MisCursos(),
+        '/': (context) => MisCursos(),
         '/curso_horas': (context) => CursoHoras(),
       },
-      initialRoute: '/mis_cursos',
+      initialRoute: '/',
     );
   }
 }

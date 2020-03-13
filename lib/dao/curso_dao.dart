@@ -1,6 +1,7 @@
 import 'package:rayn/dao/db_dao.dart';
 import 'package:rayn/model/curso.dart';
 
+
 class CursoDao {
   static List<Curso> listaCursos = List<Curso>();
 

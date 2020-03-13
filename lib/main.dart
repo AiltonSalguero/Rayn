@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rayn/page/curso_horas.dart';
 import 'package:rayn/page/mis_cursos.dart';
+import 'package:rayn/page/test2.dart';
 
 void main() => runApp(MyApp());
 

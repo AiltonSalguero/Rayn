@@ -1,4 +1,4 @@
-package com.example.rayn
+package com.trikavengers.rayn
 
 import android.os.Bundle
 

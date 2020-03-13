@@ -161,27 +161,6 @@ class _CursoHorasState extends State<CursoHoras> {
     );
   }
 
-  Widget _buildTiempoRow(Curso curso) {
-    return Container(
-      margin: EdgeInsets.only(
-        left: 12,
-        right: 16,
-      ),
-      child: ListTile(
-        subtitle: Text("Regions: ${curso.nombre}"),
-        title: Container(
-          child: Text(
-            curso.tiempoEstudiando.toString(),
-            style: TextStyle(
-              fontSize: 20.0,
-            ),
-          ),
-        ),
-        //trailing: _showFavIcon(sen),
-      ),
-    );
-  }
-
   // Activa o desactiva el contador y actualiza el tiempo en la base de datos
   void onTiempoSwitchButton(String tipoTiempo, bool contarTiempo) {
     if (contarTiempo) {
